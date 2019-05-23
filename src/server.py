@@ -128,7 +128,7 @@ class gameServerProtocol(LineReceiver):
         clientIndex = self.factory.clients.index(self)
 
         # handle base64 data
-        decodedData = base64.b64decode(data)
+        decodedData = base64.b64decode(data).decode('ascii')
 
         g.connectionLogger.debug("Received data from " + str(self.transport.getPeer().host))
         g.connectionLogger.debug(" -> " + decodedData)
@@ -137,11 +137,11 @@ class gameServerProtocol(LineReceiver):
 
     def closeConnection(self, index):
         ''' closes connection with client #index '''
-        print 'closeConnection() todo'
+        print( 'closeConnection() todo')
 
     def sendDataTo(self, index, data):
         # encode data using base64
-        encodedData = base64.b64encode(data)
+        encodedData = base64.b64encode(data.encode())
         self.factory.clients[index].sendLine(encodedData)
 
     def sendDataToAll(self, data):

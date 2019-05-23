@@ -566,7 +566,9 @@ def spawnItem(itemNum, itemVal, mapNum, x, y):
     spawnItemSlot(i, itemNum, itemVal, Item[itemNum].data1, mapNum, x, y)
 
 def spawnItemSlot(mapItemSlot, itemNum, itemVal, itemDur, mapNum, x, y):
-    if mapItemSlot is None or mapItemSlot > MAX_MAP_ITEMS or itemNum > MAX_ITEMS or mapNum is None or mapNum > MAX_MAPS:
+    if mapItemSlot is None or mapNum is None or itemNum is None:
+        return
+    if   mapItemSlot > MAX_MAP_ITEMS or itemNum > MAX_ITEMS or  mapNum > MAX_MAPS:
         return
 
     i = mapItemSlot
@@ -883,7 +885,7 @@ def attackNpc(attacker, mapNpcNum, damage):
 
         else:
             # player is in party
-            print 'player is in party, todo'
+            print ('player is in party, todo')
 
         # drop loot if they have it
         n = random.randint(1, NPC[npcNum].dropChance)
@@ -1237,44 +1239,46 @@ def playerMapGetItem(index):
     mapNum = getPlayerMap(index)
 
     for i in range(MAX_MAP_ITEMS):
-        # see if theres an item here
-        if mapItem[mapNum][i].num <= MAX_ITEMS:
-            # check if item is at same location as the player
-            if mapItem[mapNum][i].x == getPlayerX(index) and mapItem[mapNum][i].y == getPlayerY(index):
-                # find open slot
-                n = findOpenInvSlot(index, mapItem[mapNum][i].num)
+        
+        if mapItem[mapNum][i].num is not None:
+            # see if theres an item here
+            if mapItem[mapNum][i].num <= MAX_ITEMS:
+                # check if item is at same location as the player
+                if mapItem[mapNum][i].x == getPlayerX(index) and mapItem[mapNum][i].y == getPlayerY(index):
+                    # find open slot
+                    n = findOpenInvSlot(index, mapItem[mapNum][i].num)
 
-                # open slot available?
-                if n is not None:
-                    # give item to player
-                    setPlayerInvItemNum(index, n, mapItem[mapNum][i].num)
+                    # open slot available?
+                    if n is not None:
+                        # give item to player
+                        setPlayerInvItemNum(index, n, mapItem[mapNum][i].num)
 
-                    # is the item a currency?
-                    if Item[getPlayerInvItemNum(index, n)].type == ITEM_TYPE_CURRENCY:
-                        setPlayerInvItemValue(index, n, getPlayerInvItemValue(index, n) + mapItem[mapNum][i].value)
-                        msg = 'You picked up ' + str(mapItem[mapNum][i].value) + ' ' + Item[getPlayerInvItemNum(index, n)].name + '.'
+                        # is the item a currency?
+                        if Item[getPlayerInvItemNum(index, n)].type == ITEM_TYPE_CURRENCY:
+                            setPlayerInvItemValue(index, n, getPlayerInvItemValue(index, n) + mapItem[mapNum][i].value)
+                            msg = 'You picked up ' + str(mapItem[mapNum][i].value) + ' ' + Item[getPlayerInvItemNum(index, n)].name + '.'
+
+                        else:
+                            setPlayerInvItemValue(index, n, 0)
+                            msg = 'You picked up a ' + Item[getPlayerInvItemNum(index, n)].name
+
+                        setPlayerInvItemDur(index, n, mapItem[mapNum][i].dur)
+
+                        # erase item from map
+                        mapItem[mapNum][i].num = None
+                        mapItem[mapNum][i].value = None
+                        mapItem[mapNum][i].dur = None
+                        mapItem[mapNum][i].x = None
+                        mapItem[mapNum][i].y = None
+
+                        sendInventoryUpdate(index, n)
+                        spawnItemSlot(i, None, None, None, getPlayerMap(index), None, None)
+                        playerMsg(index, msg, textColor.YELLOW)
+                        break
 
                     else:
-                        setPlayerInvItemValue(index, n, 0)
-                        msg = 'You picked up a ' + Item[getPlayerInvItemNum(index, n)].name
-
-                    setPlayerInvItemDur(index, n, mapItem[mapNum][i].dur)
-
-                    # erase item from map
-                    mapItem[mapNum][i].num = None
-                    mapItem[mapNum][i].value = None
-                    mapItem[mapNum][i].dur = None
-                    mapItem[mapNum][i].x = None
-                    mapItem[mapNum][i].y = None
-
-                    sendInventoryUpdate(index, n)
-                    spawnItemSlot(i, None, None, None, getPlayerMap(index), None, None)
-                    playerMsg(index, msg, textColor.YELLOW)
-                    break
-
-                else:
-                    playerMsg(index, 'Your inventory is full.', textColor.BRIGHT_RED)
-                    break
+                        playerMsg(index, 'Your inventory is full.', textColor.BRIGHT_RED)
+                        break
 
 def playerMapDropItem(index, invNum, amount):
     if not isPlaying(index) or invNum < 0 or invNum > MAX_INV:
